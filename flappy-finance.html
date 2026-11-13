@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="light dark"/>
+<link rel="icon" href="data:,"/>
+<title>Flappy Finance — Fly, Save, Learn!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e0f2fe; --bg2:#fef9c3; --card:#ffffff; --card2:#f0fdf4; --ink:#0f2a1f; --muted:#475569; --line:#bae6fd;
+  --green:#059669; --green2:#047857; --gold:#f59e0b; --gold2:#d97706; --pink:#ec4899; --sky:#0284c7; --red:#dc2626;
+  --shadow:0 10px 30px rgba(2,132,199,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0c1a2e; --bg2:#1a2e1a; --card:#12263a; --card2:#132e22; --ink:#f0fdf4; --muted:#cbd5e1; --line:#1e3a4c; --shadow:0 10px 30px rgba(0,0,0,.4)}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Nunito",system-ui,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--ink);min-height:100vh}
+button{min-height:44px}
+h1,h2,h3{font-family:"Baloo 2",system-ui,sans-serif;line-height:.95;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 16px 28px}
+.hero{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between;margin-bottom:14px}
+.hero h1{font-size:clamp(42px,7vw,72px);letter-spacing:-.02em}
+.hero h1 span{color:var(--green)} .hero h1 em{color:var(--gold2);font-style:normal}
+.tagline{font-size:18px;font-weight:800;color:var(--muted);max-width:560px;margin-top:6px;line-height:1.4}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:9px 13px;font-weight:900;font-size:13px;box-shadow:var(--shadow)}
+.badge b{color:var(--green2)}
+.layout{display:grid;grid-template-columns:470px 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* GAME */
+.game-card{background:#082f49;border-radius:24px;padding:10px;box-shadow:var(--shadow);border:3px solid #0ea5e9}
+.hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.hud div{background:#fff;border-radius:14px;padding:8px 10px;text-align:center}
+.hud small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:900;color:#64748b}
+.hud strong{font-size:22px;font-family:"Baloo 2";color:#065f46}
+.hud strong.gold{color:#b45309}
+.stage{position:relative;border-radius:18px;overflow:hidden;background:#7dd3fc;aspect-ratio:42/64;max-height:640px;margin:0 auto;width:100%}
+canvas{width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px;background:rgba(8,47,73,.72);color:#fff;backdrop-filter:blur(3px)}
+.overlay.hidden{display:none}
+.overlay h2{font-size:38px;margin-bottom:8px}
+.overlay p{font-weight:700;line-height:1.45;max-width:340px;margin:6px 0 14px;color:#e0f2fe}
+.btn{border:0;border-radius:999px;padding:12px 20px;font-weight:900;font-family:"Nunito";font-size:16px;cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--gold);color:#451a03;box-shadow:0 6px 0 #b45309}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 6px 0 var(--green2)}
+.btn-white{background:#fff;color:#082f49}
+.btn-ghost{background:transparent;border:2px solid #e2e8f0;color:#082f49;box-shadow:none}
+.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:10px}
+.controls button{border-radius:14px}
+.diff{display:flex;gap:6px;margin-top:10px;background:#e0f2fe;border-radius:999px;padding:4px}
+.diff button{flex:1;border-radius:999px;border:0;background:transparent;font-weight:900;cursor:pointer;padding:8px 4px;font-size:13px}
+.diff button.active{background:#fff;color:#065f46;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.keyhint{text-align:center;color:#bae6fd;font-size:12px;font-weight:700;margin-top:8px}
+
+/* QUIZ overlay specific */
+.quiz{background:#fff;color:#0f172a;text-align:left;align-items:stretch;justify-content:flex-start;overflow:auto}
+.quiz .qtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.qpill{background:#fef3c7;color:#92400e;font-weight:900;font-size:12px;padding:6px 10px;border-radius:999px}
+.quiz h2{font-size:24px;line-height:1.1;color:#065f46}
+.choices{display:grid;gap:9px;margin-top:14px}
+.choice{width:100%;text-align:left;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px;padding:13px 14px;font-weight:800;font-size:15px;cursor:pointer;color:#0f172a}
+.choice:hover{border-color:var(--green)}
+.choice.correct{background:#dcfce7;border-color:var(--green)}
+.choice.wrong{background:#fee2e2;border-color:var(--red)}
+.explain{display:none;background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:12px;margin-top:12px;font-size:14px;line-height:1.5;font-weight:700}
+.explain.show{display:block}
+
+/* SIDEBAR */
+.side{display:grid;gap:14px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.card h3{font-size:22px;margin-bottom:8px}
+.card p,.card li{color:var(--muted);font-weight:700;line-height:1.55;font-size:15px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+@media(max-width:560px){.steps{grid-template-columns:1fr}}
+.step{background:var(--card2);border-radius:14px;padding:12px}
+.step b{font-size:28px;display:block}
+.step span{font-weight:900;font-size:13px;line-height:1.3;display:block}
+.concepts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+@media(max-width:560px){.concepts{grid-template-columns:1fr}}
+.concept{border-radius:14px;padding:13px;border:2px dashed #a7f3d0;background:#f0fdf4}
+@media(prefers-color-scheme:dark){.concept{background:#132e22}}
+.concept strong{display:block;font-size:15px}
+.concept p{font-size:13.5px;margin:4px 0 0}
+.progress-row{display:flex;gap:10px;margin-top:10px}
+.progress-row div{flex:1;background:#fef9c3;border-radius:14px;padding:12px;text-align:center}
+@media(prefers-color-scheme:dark){.progress-row div{background:#451a03;color:#fef3c7}}
+.progress-row strong{font-size:24px;display:block;font-family:"Baloo 2"}
+.progress-row small{font-weight:900;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.tip-box{background:#082f49;color:#fff;border-radius:16px;padding:16px}
+.tip-box h3{color:#fde68a}
+.tip-box p{color:#e0f2fe}
+.goal{display:flex;gap:10px;align-items:center;background:#fff7ed;border:2px solid #fed7aa;border-radius:14px;padding:12px;margin-top:10px}
+@media(prefers-color-scheme:dark){.goal{background:#431407}}
+.goal-icon{font-size:32px}
+.goal p{margin:0;font-size:14px}
+footer{margin-top:18px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);line-height:1.6}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <h1>FLAPPY <span>FINANCE</span> <em>🪙</em></h1>
+      <p class="tagline">Help Penny the Piggy Bank fly past impulse buys, dodge big bills, and save for something that really matters.</p>
+    </div>
+    <div class="badges" aria-label="Game info">
+      <div class="badge">🎯 Grades <b>6–8</b></div>
+      <div class="badge">⏱️ Rounds <b>2–3 min</b></div>
+      <div class="badge">🏆 Goal <b>Save $100</b></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- GAME COLUMN -->
+    <section class="game-card" aria-label="Flappy Finance game">
+      <div class="hud" aria-live="polite">
+        <div><small>💰 Saved</small><strong id="hudMoney">$0</strong></div>
+        <div><small>🚪 Gates Passed</small><strong id="hudGates">0</strong></div>
+        <div><small>⭐ Best Save</small><strong class="gold" id="hudBest">$0</strong></div>
+      </div>
+
+      <div class="stage" id="stage">
+        <canvas id="game" width="420" height="640" aria-label="Game canvas. Tap or press space to flap."></canvas>
+
+        <!-- START -->
+        <div class="overlay" id="startOverlay">
+          <div style="font-size:56px">🐷</div>
+          <h2>Ready to fly &amp; save?</h2>
+          <p>Tap, click, or press <b>SPACE</b> to flap.<br>Fly through the green gates = <b>+$10 saved</b>.<br>Grab gold coins = <b>+$5</b>. Don't hit a bill!</p>
+          <button class="btn btn-primary" id="startBtn">▶ &nbsp; START SAVING</button>
+          <p style="font-size:13px;margin-top:12px">Answer a Money Quiz every 4 gates for a +$15 bonus!</p>
+        </div>
+
+        <!-- QUIZ -->
+        <div class="overlay quiz hidden" id="quizOverlay">
+          <div class="qtop"><span class="qpill">💡 MONEY QUIZ • +$15 BONUS</span><span class="qpill" id="quizCount">1 / 12</span></div>
+          <h2 id="quizQ">Question</h2>
+          <div class="choices" id="quizChoices"></div>
+          <div class="explain" id="quizExplain"></div>
+          <button class="btn btn-green hidden" id="quizContinue" style="margin-top:12px;width:100%">Keep Flying →</button>
+        </div>
+
+        <!-- GAME OVER -->
+        <div class="overlay hidden" id="overOverlay">
+          <div style="font-size:48px">🏁</div>
+          <h2 id="overTitle">Budget Busted!</h2>
+          <p id="overStats">You saved $0</p>
+          <div style="background:#fff;color:#0f172a;border-radius:14px;padding:12px 14px;max-width:340px;font-weight:800;font-size:14px;line-height:1.5" id="overLesson"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px">
+            <button class="btn btn-primary" id="againBtn">↻ Play Again</button>
+            <button class="btn btn-white" id="shareBtn">📋 Copy My Score</button>
+          </div>
+          <p id="copied" style="font-size:13px;min-height:18px;margin-top:8px"></p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="flapBtn">🐷 FLAP!</button>
+        <button class="btn btn-white" id="pauseBtn">⏸ Pause</button>
+        <button class="btn btn-white" id="restartBtn">↻ Restart</button>
+      </div>
+      <div class="diff" role="group" aria-label="Difficulty">
+        <button data-diff="easy" class="active">🌱 Starter<br><small>Slow &amp; wide</small></button>
+        <button data-diff="normal">💪 Saver<br><small>Just right</small></button>
+        <button data-diff="hard">🚀 Pro Saver<br><small>Fast &amp; tight</small></button>
+      </div>
+      <p class="keyhint">SPACE / ↑ / W to flap &nbsp;•&nbsp; P to pause &nbsp;•&nbsp; Tap anywhere on the sky on mobile</p>
+      <p class="sr" id="live" aria-live="polite"></p>
+    </section>
+
+    <!-- SIDEBAR -->
+    <aside class="side">
+      <div class="card">
+        <h3>🎮 How to play</h3>
+        <div class="steps">
+          <div class="step"><b>1️⃣</b><span>FLAP<br>Tap or press Space to stay in the air.</span></div>
+          <div class="step"><b>2️⃣</b><span>SAVE<br>Pass gates &amp; collect coins instead of spending.</span></div>
+          <div class="step"><b>3️⃣</b><span>LEARN<br>Nail the Money Quiz to earn bonus cash.</span></div>
+        </div>
+        <div class="goal"><div class="goal-icon">🎧</div><p><strong>Penny's goal:</strong> New headphones cost <strong>$100</strong>. Every gate you pass is money Penny <em>didn't</em> spend on snacks, skins, and impulse buys — so it goes straight into savings.</p></div>
+      </div>
+
+      <div class="card">
+        <h3>🧠 Money words to know</h3>
+        <p>You'll see these in the quiz — learn them and the bonus cash is yours.</p>
+        <div class="concepts">
+          <div class="concept"><strong>📋 Budget</strong><p>A plan for your money: what comes in, what goes out, and what's left to save.</p></div>
+          <div class="concept"><strong>🍔 Need vs. Want</strong><p>Needs keep you alive &amp; learning. Wants are fun extras — nice, not necessary.</p></div>
+          <div class="concept"><strong>📈 Interest</strong><p>Extra money a bank pays you for saving — your money makes money.</p></div>
+          <div class="concept"><strong>🛟 Emergency Fund</strong><p>Savings set aside for surprises, like a broken phone screen or a lost bike lock.</p></div>
+          <div class="concept"><strong>🛍️ Impulse Buy</strong><p>Buying something unplanned just because it looks cool in the moment.</p></div>
+          <div class="concept"><strong>🎯 Savings Goal</strong><p>A target amount + a deadline. Goals turn “someday” into a plan.</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📊 Your learning this session</h3>
+        <div class="progress-row">
+          <div><strong id="statQuiz">0/0</strong><small>Quiz correct</small></div>
+          <div><strong id="statCoins">0</strong><small>Coins grabbed</small></div>
+          <div><strong id="statStreak">0</strong><small>Best gate streak</small></div>
+        </div>
+        <p style="margin-top:12px" id="rankText">Your saver rank: <strong>🌱 Beginner Budgeter</strong> — play a round to level up!</p>
+      </div>
+
+      <div class="tip-box">
+        <h3>💡 Smart Money Tip</h3>
+        <p id="tipText">Try the 24-hour rule: see something you want? Wait a day. If you still want it tomorrow, it might be worth it. If you forgot it — you just saved money for free.</p>
+        <button class="btn btn-primary" id="tipBtn" style="margin-top:10px">Give me another tip →</button>
+      </div>
+
+      <div class="card">
+        <h3>👨‍👩‍👧 For grown-ups &amp; teachers</h3>
+        <p>Covers budgeting, needs vs. wants, saving, interest, and smart spending for grades 6–8. Play together and ask: <em>“What would YOU save for with $100?”</em> No accounts, no purchases — just play and discuss.</p>
+      </div>
+    </aside>
+  </div>
+
+  <footer>Made for middle school money skills • Every dollar in the game is pretend — the habits are real.<br>Tip: Play 3 rounds and try to beat your Best Save each time.</footer>
+</div>
+
+<script>
+(function(){
+  var canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
+  var W=420,H=640, GROUND=72;
+  var startOverlay=document.getElementById('startOverlay'), overOverlay=document.getElementById('overOverlay'), quizOverlay=document.getElementById('quizOverlay');
+  var hudMoney=document.getElementById('hudMoney'), hudGates=document.getElementById('hudGates'), hudBest=document.getElementById('hudBest');
+  var state='ready'; // ready, playing, quiz, paused, over
+  var prevState='playing';
+  var frame=0, money=0, gates=0, coinsCollected=0, best=0, streak=0, bestStreak=0;
+  var quizCorrect=0, quizAsked=0, quizIdx=0, lastQuizGate=0;
+  var diff='easy';
+  var settings={easy:{speed:2.2,gap:182,spawn:118}, normal:{speed:2.9,gap:164,spawn:108}, hard:{speed:3.6,gap:148,spawn:98}};
+  var pig={x:92,y:300,vy:0,r:21,rot:0,wing:0};
+  var pipes=[], coins=[], particles=[], clouds=[];
+  for(var i=0;i<6;i++) clouds.push({x:Math.random()*W,y:30+Math.random()*180,s:18+Math.random()*28,v:.2+Math.random()*.3});
+
+  var pipeLabels=[["SNEAKERS $85","RENT"],["GAME SKIN $20","GROCERIES"],["SNACKS $12","BOOKS"],["PHONE CASE $30","SCHOOL SUPPLIES"],["TOY $45","WATER BILL"],["CANDY $8","LUNCH"],["NEW GAME $60","BUS PASS"],["SLIME KIT $15","NOTEBOOKS"]];
+  var tips=[
+    "Try the 24-hour rule: see something you want? Wait a day. If you still want it tomorrow, it might be worth it. If you forgot it — you just saved money for free.",
+    "Pay yourself first: when you get allowance or gift money, move a little to savings BEFORE you spend anything. Even $2 at a time adds up.",
+    "Split it 50 / 30 / 20: about 50% needs, 30% wants, 20% savings. It's a simple starter budget that works at any age.",
+    "Track it for a week: write down every dollar you spend. Most people find one sneaky leak — snacks and small in-game buys are the classic ones.",
+    "Name your goal and put a picture of it where you'll see it. Saving for 'headphones by March' beats saving for 'stuff, someday.'",
+    "Beware the sale trap: a $40 item on sale for $25 isn't saving $15 if you weren't going to buy it — it's spending $25."
+  ]; var tipI=0;
+  document.getElementById('tipBtn').onclick=function(){ tipI=(tipI+1)%tips.length; document.getElementById('tipText').textContent=tips[tipI]; };
+
+  var QUESTIONS=[
+    {topic:"Needs vs Wants", q:"Which one is a NEED, not a want?", c:["A new video game","Food for lunch","Designer sneakers","Movie tickets"], a:1, why:"Food is a need — your body needs it. Games, fancy sneakers, and movies are wants: fun, but you can live without them."},
+    {topic:"Budgeting", q:"What is a budget?", c:["Money you hide under your bed","A plan for how you'll spend & save your money","A type of bank account","Borrowing from a friend"], a:1, why:"A budget is a plan. It tells your money where to go — spending, saving, and sharing — before it disappears."},
+    {topic:"Saving", q:"You get $20 for your birthday. What's the smartest FIRST move?", c:["Spend it all today","Lend it all to a friend","Save part of it for your goal","Buy candy for everyone"], a:2, why:"Pay yourself first! Saving part of any money you get — even $5 of $20 — builds the habit that grows real savings."},
+    {topic:"Interest", q:"What is interest when you SAVE money in a bank?", c:["A fee you pay the bank","Extra money the bank pays you for saving","Money you borrow","A discount at a store"], a:1, why:"Banks pay you interest for keeping savings with them. Your money literally earns more money while it sits there."},
+    {topic:"Smart Spending", q:"An ad says a $60 game is '50% OFF — only $30!' You weren't planning to buy it. Buying it means you…", c:["Saved $30","Spent $30","Made $30","Got it for free"], a:1, why:"A discount only saves money if you were going to buy it anyway. Otherwise, it's still $30 out of your pocket."},
+    {topic:"Emergency Fund", q:"What's an emergency fund for?", c:["Buying concert tickets","Surprise costs, like a broken bike or phone","Lending to friends","Holiday gifts"], a:1, why:"An emergency fund covers surprises so one bad day doesn't wipe out the money you saved for your goals."},
+    {topic:"Goals", q:"Which is the BEST savings goal?", c:["Save some money sometime","Get rich","Save $100 for headphones by March","Save everything forever"], a:2, why:"Great goals have an amount AND a deadline: '$100 by March' tells you exactly how much to save each week."},
+    {topic:"Impulse Buys", q:"You see cool shoes and want them RIGHT NOW, but they weren't in your plan. That's called…", c:["Investing","An impulse buy","A budget","Interest"], a:1, why:"That's an impulse buy. Waiting 24 hours helps you decide if you really want it — or just wanted the rush."},
+    {topic:"Earning", q:"Which is an example of EARNING money?", c:["Finding $5 on the ground","Mowing a neighbor's lawn for $15","Getting a gift card","Winning a raffle"], a:1, why:"Earning means trading your time and effort for money — like mowing lawns, babysitting, or walking dogs."},
+    {topic:"Comparing Prices", q:"Same headphones: $45 at one store, $32 online. What should a smart shopper do?", c:["Always buy the first one they see","Compare prices & check reviews first","Buy both","Never buy anything"], a:1, why:"Comparing prices takes 2 minutes and saved $13 here. Smart shoppers check before they buy."},
+    {topic:"Credit", q:"If you borrow $10 and have to pay back $12, the extra $2 is…", c:["A gift","Interest you pay for borrowing","Tax","A tip"], a:1, why:"Borrowing isn't free — interest is the price of borrowing. That's why credit cards can make things cost MORE than the price tag."},
+    {topic:"Opportunity Cost", q:"You spend your last $15 on a game skin. Now you can't afford the movie with friends. The movie is your…", c:["Budget","Interest","Opportunity cost — what you gave up","Emergency fund"], a:2, why:"Every dollar can only be spent once. What you give up when you choose one thing over another is the opportunity cost."}
+  ];
+  // shuffle question order once
+  QUESTIONS.sort(function(){return Math.random()-.5});
+
+  // Audio (tiny WebAudio beeps, resumed on first tap)
+  var AC=null, soundOn=true;
+  function beep(f,d,type,g){ if(!soundOn) return; try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); var o=AC.createOscillator(), gn=AC.createGain(); o.type=type||'sine'; o.frequency.value=f; gn.gain.setValueAtTime(g||.12,AC.currentTime); gn.gain.exponentialRampToValueAtTime(.001,AC.currentTime+(d||.12)); o.connect(gn); gn.connect(AC.destination); o.start(); o.stop(AC.currentTime+(d||.12)); }catch(e){} }
+  function sndFlap(){beep(520,.08,'square',.05)} function sndCoin(){beep(880,.09); setTimeout(function(){beep(1320,.12)},70)} function sndGate(){beep(660,.1)} function sndCrash(){beep(160,.35,'sawtooth',.14)} function sndGood(){beep(784,.12); setTimeout(function(){beep(1046,.16)},110)}
+
+  function reset(){
+    pig.y=300; pig.vy=0; pig.rot=0; pipes=[]; coins=[]; particles=[]; frame=0; money=0; gates=0; streak=0; lastQuizGate=0; updateHUD();
+  }
+  function updateHUD(){
+    hudMoney.textContent='$'+money; hudGates.textContent=gates; hudBest.textContent='$'+best;
+    document.getElementById('statCoins').textContent=coinsCollected;
+    document.getElementById('statQuiz').textContent=quizCorrect+'/'+quizAsked;
+    document.getElementById('statStreak').textContent=bestStreak;
+    var rank = money>=100||quizCorrect>=6 ? '🏆 Money Master' : money>=60||quizCorrect>=4 ? '💰 Super Saver' : money>=30||quizCorrect>=2 ? '🌟 Smart Spender' : '🌱 Beginner Budgeter';
+    if(state==='over'||money>0||quizAsked>0) document.getElementById('rankText').innerHTML='Your saver rank: <strong>'+rank+'</strong>'+(money>=100?' — you hit Penny\'s $100 headphone goal! 🎧':'');
+  }
+  function startGame(){
+    reset(); state='playing'; startOverlay.classList.add('hidden'); overOverlay.classList.add('hidden'); quizOverlay.classList.add('hidden'); flap();
+  }
+  function flap(){ if(state!=='playing') return; pig.vy=-8.6; pig.wing=8; sndFlap(); }
+  function gameOver(){
+    state='over'; sndCrash(); if(money>best) best=money; updateHUD();
+    document.getElementById('overTitle').textContent = money>=100 ? '🎧 Goal Smashed!' : money>=50 ? 'Great Saving!' : 'Budget Busted!';
+    document.getElementById('overStats').innerHTML='You saved <b style="color:#fde68a;font-size:22px">$'+money+'</b> • '+gates+' gates • '+coinsCollected+' coins this run • Quiz: '+quizCorrect+'/'+quizAsked+' correct';
+    var lessons=[
+      '💡 <b>Remember:</b> Small saves add up. $10 a week is $520 in a year — that\'s how real goals get funded.',
+      '💡 <b>Remember:</b> Needs first, wants second. Ask "Do I NEED this, or just WANT it right now?" before you buy.',
+      '💡 <b>Remember:</b> The 24-hour rule beats impulse buys. Wait a day — if you still want it, plan for it in your budget.',
+      '💡 <b>Remember:</b> Pay yourself first. Move a little to savings the moment money arrives, before spending starts.'
+    ];
+    document.getElementById('overLesson').innerHTML=lessons[Math.floor(Math.random()*lessons.length)];
+    overOverlay.classList.remove('hidden');
+  }
+  function showQuiz(){
+    state='quiz'; var q=QUESTIONS[quizIdx%QUESTIONS.length]; quizIdx++; quizAsked++;
+    document.getElementById('quizCount').textContent=((quizIdx-1)%QUESTIONS.length+1)+' / '+QUESTIONS.length;
+    document.getElementById('quizQ').textContent=q.q;
+    document.getElementById('quizExplain').className='explain'; document.getElementById('quizExplain').innerHTML='';
+    var cont=document.getElementById('quizContinue'); cont.classList.add('hidden');
+    var box=document.getElementById('quizChoices'); box.innerHTML='';
+    q.c.forEach(function(txt,i){
+      var b=document.createElement('button'); b.className='choice'; b.textContent=['A','B','C','D'][i]+'.  '+txt;
+      b.onclick=function(){
+        var all=box.querySelectorAll('.choice'); all.forEach(function(x){x.disabled=true});
+        var ex=document.getElementById('quizExplain');
+        if(i===q.a){ b.classList.add('correct'); money+=15; quizCorrect++; sndGood(); ex.innerHTML='✅ <b>Correct! +$15 bonus.</b><br>'+q.why; }
+        else{ b.classList.add('wrong'); all[q.a].classList.add('correct'); sndCrash(); ex.innerHTML='❌ <b>Not quite — no bonus this time.</b><br>'+q.why; }
+        ex.classList.add('show'); cont.classList.remove('hidden'); updateHUD();
+      };
+      box.appendChild(b);
+    });
+    quizOverlay.classList.remove('hidden'); updateHUD();
+  }
+  document.getElementById('quizContinue').onclick=function(){ quizOverlay.classList.add('hidden'); state='playing'; pig.vy=-4; };
+
+  function spawnPipe(){
+    var s=settings[diff]; var gapY=90+Math.random()*(H-GROUND-s.gap-150);
+    var labels=pipeLabels[Math.floor(Math.random()*pipeLabels.length)];
+    pipes.push({x:W+10, gapY:gapY, gap:s.gap, passed:false, topLabel:labels[0], botLabel:labels[1]});
+    // coin in the gap sometimes, or floating just after
+    if(Math.random()<0.75) coins.push({x:W+90, y:gapY+s.gap/2+(Math.random()*40-20), r:13, taken:false, bob:Math.random()*6});
+  }
+  function drawPipe(p){
+    var w=76;
+    // top bill
+    ctx.fillStyle='#dc2626'; roundRect(p.x,0,w,p.gapY,10); ctx.fill();
+    ctx.fillStyle='#991b1b'; roundRect(p.x-4,p.gapY-26,w+8,26,8); ctx.fill();
+    // bottom bill
+    ctx.fillStyle='#dc2626'; roundRect(p.x,p.gapY+p.gap,w,H-GROUND-(p.gapY+p.gap),10); ctx.fill();
+    ctx.fillStyle='#991b1b'; roundRect(p.x-4,p.gapY+p.gap,w+8,26,8); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='900 10px Nunito'; ctx.textAlign='center';
+    ctx.save(); ctx.translate(p.x+w/2, Math.max(34,p.gapY-52)); wrapText(p.topLabel, w-10, 12); ctx.restore();
+    ctx.save(); ctx.translate(p.x+w/2, p.gapY+p.gap+44); wrapText(p.botLabel, w-10, 12); ctx.restore();
+    ctx.font='900 18px Nunito'; ctx.fillText('💸', p.x+w/2, Math.max(20,p.gapY-66));
+    ctx.fillText('💸', p.x+w/2, p.gapY+p.gap+78 > H-GROUND-6 ? H-GROUND-10 : p.gapY+p.gap+78);
+  }
+  function wrapText(t,maxW,lh){ var words=t.split(' '), line='', y=0; for(var i=0;i<words.length;i++){ var test=line?line+' '+words[i]:words[i]; if(ctx.measureText(test).width>maxW&&line){ ctx.fillText(line,0,y); line=words[i]; y+=lh; } else line=test; } ctx.fillText(line,0,y); }
+  function roundRect(x,y,w,h,r){ if(w<0)w=0; if(h<0)h=0; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function draw(){
+    // sky
+    var gr=ctx.createLinearGradient(0,0,0,H); gr.addColorStop(0,'#38bdf8'); gr.addColorStop(.75,'#bae6fd'); gr.addColorStop(1,'#fef9c3'); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+    // sun + clouds
+    ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(356,58,28,0,7); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.9)';
+    clouds.forEach(function(c){ ctx.beginPath(); ctx.ellipse(c.x,c.y,c.s,c.s*.45,0,0,7); ctx.fill(); });
+    // distant buildings
+    ctx.fillStyle='rgba(14,116,144,.18)'; var bx=[0,55,120,185,250,315,375]; bx.forEach(function(x,i){ var bh=70+((i*37)%60); ctx.fillRect(x,H-GROUND-bh,48,bh); });
+    // goal flag at top-right hint
+    // pipes
+    pipes.forEach(drawPipe);
+    // coins
+    coins.forEach(function(c){ if(c.taken) return; var bobY=Math.sin(frame*.08+c.bob)*4; ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(c.x,c.y+bobY,c.r,0,7); ctx.fill(); ctx.fillStyle='#fbbf24'; ctx.beginPath(); ctx.arc(c.x,c.y+bobY,c.r-4,0,7); ctx.fill(); ctx.fillStyle='#92400e'; ctx.font='900 14px Baloo 2'; ctx.textAlign='center'; ctx.fillText('$',c.x,c.y+bobY+5); });
+    // particles
+    particles.forEach(function(pt){ ctx.fillStyle='rgba(245,158,11,'+pt.life+')'; ctx.beginPath(); ctx.arc(pt.x,pt.y,4,0,7); ctx.fill(); });
+    // ground
+    ctx.fillStyle='#22c55e'; ctx.fillRect(0,H-GROUND,W,GROUND); ctx.fillStyle='#16a34a'; ctx.fillRect(0,H-GROUND,W,10);
+    ctx.fillStyle='#fff'; ctx.font='900 12px Nunito'; ctx.textAlign='left'; ctx.fillText('🌱 Penny\'s Savings Path — every step not spent is saved!',10,H-18);
+    // goal progress mini bar on ground
+    ctx.fillStyle='rgba(255,255,255,.85)'; roundRect(10,H-52,180,14,7); ctx.fill(); ctx.fillStyle='#059669'; var pw=Math.min(180, money/100*180); if(pw>4){ roundRect(10,H-52,pw,14,7); ctx.fill(); } ctx.fillStyle='#065f46'; ctx.font='900 10px Nunito'; ctx.fillText('GOAL $100',196,H-41);
+    // pig
+    ctx.save(); ctx.translate(pig.x,pig.y); ctx.rotate(pig.rot);
+    ctx.fillStyle='#f9a8d4'; ctx.beginPath(); ctx.ellipse(0,0,26,21,0,0,7); ctx.fill(); // body
+    ctx.fillStyle='#f472b6'; ctx.beginPath(); ctx.moveTo(-12,-16); ctx.lineTo(-4,-26); ctx.lineTo(2,-15); ctx.closePath(); ctx.fill(); // ear
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(10,-5,6,0,7); ctx.fill(); ctx.fillStyle='#111827'; ctx.beginPath(); ctx.arc(12,-5,3,0,7); ctx.fill(); // eye
+    ctx.fillStyle='#f472b6'; ctx.beginPath(); ctx.ellipse(22,2,8,6,0,0,7); ctx.fill(); ctx.fillStyle='#be185d'; ctx.beginPath(); ctx.arc(20,2,1.8,0,7); ctx.arc(25,2,1.8,0,7); ctx.fill(); // snout
+    var wf = pig.wing>0 ? Math.sin(frame*.9)*7 : 2;
+    ctx.fillStyle='#fef3c7'; ctx.beginPath(); ctx.ellipse(-8,2+wf*.3,13,7,-.6+wf*.04,0,7); ctx.fill(); // wing
+    ctx.fillStyle='#92400e'; ctx.font='900 11px Nunito'; ctx.textAlign='center'; ctx.fillText('$',-2,-2);
+    ctx.restore();
+    if(state==='paused'){ ctx.fillStyle='rgba(8,47,73,.55)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.font='800 34px Baloo 2'; ctx.textAlign='center'; ctx.fillText('⏸ PAUSED',W/2,H/2); ctx.font='700 15px Nunito'; ctx.fillText('Press P or Pause again to keep flying',W/2,H/2+28); }
+    if(state==='ready'){ ctx.fillStyle='rgba(255,255,255,.0)'; }
+  }
+  function step(){
+    if(state==='playing'){
+      frame++; var s=settings[diff];
+      pig.vy+=0.45; pig.y+=pig.vy; pig.rot=Math.max(-.45, Math.min(1.1, pig.vy*.09)); if(pig.wing>0)pig.wing--;
+      clouds.forEach(function(c){ c.x-=c.v; if(c.x<-40){c.x=W+40;c.y=30+Math.random()*180} });
+      if(frame% s.spawn===1) spawnPipe();
+      pipes.forEach(function(p){ p.x-=s.speed; if(!p.passed && p.x+76<pig.x){ p.passed=true; gates++; streak++; if(streak>bestStreak)bestStreak=streak; money+=10; sndGate(); updateHUD(); if(gates%4===0) showQuiz(); } });
+      pipes=pipes.filter(function(p){return p.x>-90});
+      coins.forEach(function(c){ c.x-=s.speed; var dx=c.x-pig.x, dy=c.y-pig.y; if(!c.taken && dx*dx+dy*dy < (pig.r+c.r)*(pig.r+c.r)){ c.taken=true; coinsCollected++; money+=5; sndCoin(); for(var i=0;i<8;i++) particles.push({x:c.x,y:c.y,vx:Math.random()*3-1.5,vy:Math.random()*3-1.5,life:1}); updateHUD(); } });
+      coins=coins.filter(function(c){return !c.taken && c.x>-30});
+      particles.forEach(function(pt){ pt.x+=pt.vx; pt.y+=pt.vy; pt.life-=.04 }); particles=particles.filter(function(pt){return pt.life>0});
+      // collisions
+      if(pig.y-pig.r<0){ pig.y=pig.r; pig.vy=0; }
+      if(pig.y+pig.r>=H-GROUND){ gameOver(); }
+      else{
+        for(var i=0;i<pipes.length;i++){ var p=pipes[i]; if(pig.x+pig.r-4>p.x && pig.x-pig.r+4<p.x+76){ if(pig.y-pig.r < p.gapY || pig.y+pig.r > p.gapY+p.gap){ gameOver(); break; } } }
+      }
+    } else if(state==='ready'||state==='over'){
+      clouds.forEach(function(c){ c.x-=c.v*.4; if(c.x<-40)c.x=W+40 });
+      pig.y=300+Math.sin(Date.now()*.002)*10;
+    }
+    draw(); requestAnimationFrame(step);
+  }
+
+  // controls
+  document.getElementById('startBtn').onclick=startGame;
+  document.getElementById('againBtn').onclick=startGame;
+  document.getElementById('restartBtn').onclick=function(){ startGame(); };
+  document.getElementById('flapBtn').onclick=function(){ if(state==='ready') startGame(); else flap(); };
+  var pauseBtn=document.getElementById('pauseBtn');
+  function togglePause(){ if(state==='playing'){ state='paused'; pauseBtn.textContent='▶ Resume'; } else if(state==='paused'){ state='playing'; pauseBtn.textContent='⏸ Pause'; } }
+  pauseBtn.onclick=togglePause;
+  document.getElementById('shareBtn').onclick=function(){
+    var txt='🐷 Flappy Finance: I saved $'+money+'! Passed '+gates+' gates, grabbed '+coinsCollected+' coins, and got '+quizCorrect+'/'+quizAsked+' quiz questions right. Can you beat my Best Save of $'+best+'?';
+    var done=function(){ document.getElementById('copied').textContent='✅ Copied! Paste it anywhere to challenge a friend.'; };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(function(){ document.getElementById('copied').textContent=txt; }); } else { document.getElementById('copied').textContent=txt; }
+  };
+  canvas.addEventListener('pointerdown',function(e){ e.preventDefault(); if(state==='playing') flap(); });
+  document.querySelectorAll('.diff button').forEach(function(b){ b.onclick=function(){ document.querySelectorAll('.diff button').forEach(function(x){x.classList.remove('active')}); b.classList.add('active'); diff=b.getAttribute('data-diff'); if(state==='playing'||state==='ready'){ /* applies to next pipes */ } }; });
+  window.addEventListener('keydown',function(e){
+    if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){ e.preventDefault(); if(state==='ready') startGame(); else flap(); }
+    if(e.code==='KeyP') togglePause();
+    if(e.code==='Enter' && state==='over') startGame();
+  });
+  reset(); draw(); requestAnimationFrame(step); updateHUD();
+})();
+</script>
+</body>
+</html>
